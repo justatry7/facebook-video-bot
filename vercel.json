@@ -1,13 +1,4 @@
 {
-    "version": 2,
-  "builds": [
-    {
-      "src": "main.rs",
-      "use": "@vercel/rust"
-    }
-  ]
-}
-{
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ]
