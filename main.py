@@ -102,9 +102,9 @@ async def download_video(message: types.Message):
 app = Flask(__name__)
 
 # Функция для настройки webhook
-async def set_webhook():
-    webhook_url = os.getenv('WEBHOOK_URL')  # URL для вашего webhook
-    await bot.set_webhook(webhook_url)
+def set_webhook():
+    webhook_url = os.getenv('WEBHOOK_URL')  # Указание URL вебхука в переменной окружения
+    bot.set_webhook(webhook_url)  # Настроить вебхук для бота
 
 # Обработчик webhook от Telegram
 @app.route(f'/{API_TOKEN}', methods=['POST'])
@@ -127,6 +127,5 @@ def vercel_entry_point():
 
 # Экспортируем Flask приложение
 if __name__ == "__main__":
-    # Запускаем Flask сервер и бот с webhook
-    vercel_entry_point()
-    set_webhook()  # Устанавливаем webhook
+    set_webhook()  # Устанавливаем webhook перед запуском
+    vercel_entry_point()  # Запуск бота и веб-сервера
