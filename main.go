@@ -1,3 +1,11 @@
+import (
+	"fmt"
+	"log"
+	"os"
+	"github.com/joho/godotenv"  // Импортируем godotenv
+	"github.com/telegram-bot-api/telegram-bot-api"
+)
+
 package main
 
 import (
