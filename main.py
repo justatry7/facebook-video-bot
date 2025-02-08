@@ -1,14 +1,14 @@
 import os
+import logging
 import yt_dlp
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 from flask import Flask, request, jsonify
-import logging
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 # Получаем токен из переменных окружения
 API_TOKEN = os.getenv("API_TOKEN")
@@ -102,8 +102,8 @@ async def download_video(message: types.Message):
                 await message.reply_video(open(video_file, 'rb'), caption=LANGUAGES[language]["video_ready"])
 
         except Exception as e:
+            logger.error(f"Error downloading video: {e}")
             await message.reply(LANGUAGES[language]["error"])
-            logger.error(f"Error during video download: {e}")
     else:
         await message.reply(LANGUAGES[language]["not_facebook"])
 
@@ -114,10 +114,8 @@ app = Flask(__name__)
 def webhook():
     if request.method == 'POST':
         data = request.json
-        # Логирование полученных данных
         logger.debug(f"Received webhook data: {data}")
         return jsonify({"status": "ok"}), 200
 
-# Экспортируем Flask приложение (Vercel автоматически будет запускать Flask)
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
