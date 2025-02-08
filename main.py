@@ -5,7 +5,10 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 from flask import Flask, request, jsonify
 import logging
-import requests
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Получаем токен из переменных окружения
 API_TOKEN = os.getenv("API_TOKEN")
@@ -100,26 +103,21 @@ async def download_video(message: types.Message):
 
         except Exception as e:
             await message.reply(LANGUAGES[language]["error"])
+            logger.error(f"Error during video download: {e}")
     else:
         await message.reply(LANGUAGES[language]["not_facebook"])
 
 # Создание веб-сервера для Vercel
 app = Flask(__name__)
 
-# Логирование запросов для проверки работы вебхука
 @app.route('/webhook', methods=['POST'])
 def webhook():
     if request.method == 'POST':
         data = request.json
-        print("Received webhook data:", data)  # Логируем данные вебхука
+        # Логирование полученных данных
+        logger.debug(f"Received webhook data: {data}")
         return jsonify({"status": "ok"}), 200
-
-# Проверка, что вебхук Telegram был установлен правильно
-def check_webhook():
-    response = requests.get(f"https://api.telegram.org/bot{API_TOKEN}/getWebhookInfo")
-    print(response.json())  # Логируем ответ от Telegram
 
 # Экспортируем Flask приложение (Vercel автоматически будет запускать Flask)
 if __name__ == "__main__":
-    check_webhook()  # Проверка статуса вебхука
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
