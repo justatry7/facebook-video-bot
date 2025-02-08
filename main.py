@@ -101,13 +101,20 @@ async def download_video(message: types.Message):
 # Создание веб-сервера для Vercel
 app = Flask(__name__)
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    if request.method == 'POST':
-        data = request.json
-        # Здесь можно сделать дополнительные обработки данных
-        return jsonify({"status": "ok"}), 200
+# Функция для настройки webhook
+async def set_webhook():
+    webhook_url = os.getenv('WEBHOOK_URL')  # URL для вашего webhook
+    await bot.set_webhook(webhook_url)
 
+# Обработчик webhook от Telegram
+@app.route(f'/{API_TOKEN}', methods=['POST'])
+def webhook():
+    json_str = request.get_data().decode("UTF-8")
+    update = types.Update.parse_raw(json_str)
+    dp.process_update(update)
+    return "OK", 200
+
+# Функция для старта бота
 def start_bot():
     print("Bot is ready!")
     executor.start_polling(dp, skip_updates=True)
@@ -120,4 +127,6 @@ def vercel_entry_point():
 
 # Экспортируем Flask приложение
 if __name__ == "__main__":
+    # Запускаем Flask сервер и бот с webhook
     vercel_entry_point()
+    set_webhook()  # Устанавливаем webhook
