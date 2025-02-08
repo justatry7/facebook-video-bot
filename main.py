@@ -12,6 +12,11 @@ API_TOKEN = os.getenv("API_TOKEN")
 if not API_TOKEN:
     raise ValueError("API_TOKEN is not set. Add it to the environment variables.")
 
+# Получаем URL вебхука из переменных окружения
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+if not WEBHOOK_URL:
+    raise ValueError("WEBHOOK_URL is not set. Add it to the environment variables.")
+
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
@@ -101,20 +106,13 @@ async def download_video(message: types.Message):
 # Создание веб-сервера для Vercel
 app = Flask(__name__)
 
-# Функция для настройки webhook
-def set_webhook():
-    webhook_url = os.getenv('WEBHOOK_URL')  # Указание URL вебхука в переменной окружения
-    bot.set_webhook(webhook_url)  # Настроить вебхук для бота
-
-# Обработчик webhook от Telegram
-@app.route(f'/{API_TOKEN}', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def webhook():
-    json_str = request.get_data().decode("UTF-8")
-    update = types.Update.parse_raw(json_str)
-    dp.process_update(update)
-    return "OK", 200
+    if request.method == 'POST':
+        data = request.json
+        # Здесь можно сделать дополнительные обработки данных
+        return jsonify({"status": "ok"}), 200
 
-# Функция для старта бота
 def start_bot():
     print("Bot is ready!")
     executor.start_polling(dp, skip_updates=True)
@@ -127,5 +125,4 @@ def vercel_entry_point():
 
 # Экспортируем Flask приложение
 if __name__ == "__main__":
-    set_webhook()  # Устанавливаем webhook перед запуском
-    vercel_entry_point()  # Запуск бота и веб-сервера
+    vercel_entry_point()
