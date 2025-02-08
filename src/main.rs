@@ -1,58 +1,32 @@
 use reqwest::Client;
-use teloxide::prelude::*;
-use tokio;
-use dotenv::dotenv;
+use serde::{Deserialize, Serialize};
 use std::env;
+use std::error::Error;
+use std::fs;
+use tokio;
 
-#[tokio::main]
-async fn main() {
-    dotenv().ok();
-    let bot_token = env::var("TELEGRAM_BOT_TOKEN").expect("TELEGRAM_BOT_TOKEN not set");
-    let bot = Bot::new(bot_token);
-
-    teloxide::repl(bot, |message: Message, bot: Bot| async move {
-        if let Some(text) = message.text() {
-            if text.contains("facebook.com") {
-                bot.send_message(message.chat.id, "Downloading video...").await?;
-                
-                // Получаем ссылку для скачивания (функция на основе внешнего API)
-                let video_url = get_video_url(text).await;
-                
-                match video_url {
-                    Some(url) => {
-                        bot.send_video(message.chat.id, url)
-                            .caption("Here is your Facebook video!")
-                            .await?;
-                    }
-                    None => {
-                        bot.send_message(message.chat.id, "Failed to download video.").await?;
-                    }
-                }
-            } else {
-                bot.send_message(message.chat.id, "This is not a Facebook link!").await?;
-            }
-        }
-        Ok(())
-    })
-    .await;
+#[derive(Serialize, Deserialize)]
+struct TelegramResponse {
+    ok: bool,
+    result: Option<Vec<String>>,
 }
 
-async fn get_video_url(url: &str) -> Option<String> {
-    // Подключение к внешнему API для скачивания видео (например, fdown.net)
-    let client = Client::new();
-    let res = client
-        .get(format!("https://api.fdown.net/api/download?url={}", url))
-        .send()
-        .await;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    dotenv::dotenv().ok();  // Загружаем переменные окружения из .env
 
-    match res {
-        Ok(response) => {
-            if let Ok(json) = response.json::<serde_json::Value>().await {
-                json["downloadUrl"].as_str().map(String::from)
-            } else {
-                None
-            }
-        }
-        Err(_) => None,
-    }
+    let token = env::var("TELEGRAM_BOT_TOKEN")?;  // Получаем токен из переменной окружения
+
+    // Пример, как вызвать API Telegram
+    let url = format!("https://api.telegram.org/bot{}/getMe", token);
+    let client = Client::new();
+    let res = client.get(&url).send().await?;
+
+    let body = res.text().await?;
+    println!("Telegram API response: {}", body);
+
+    // Загружаем видео по ссылке, передаваемой в сообщении
+    // Для этого тебе нужно будет использовать библиотеку для скачивания видео из Facebook (например, через fdown)
+
+    Ok(())
 }
