@@ -111,6 +111,3 @@ def webhook():
         data = request.json
         logger.debug(f"Received webhook data: {data}")
         return jsonify({"status": "ok"}), 200
-
-if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5000)  # Порт можно указать напрямую, если нужно
