@@ -36,6 +36,19 @@ function getLanguage(userId) {
   return userLanguages[userId] || "en";
 }
 
+// Запуск бота через Webhook для Vercel
+export default async function handler(req, res) {
+  // Handle Telegram webhook requests
+  if (req.method === "POST") {
+    const update = req.body;
+    await bot.handleUpdate(update);
+    return res.status(200).send("OK");
+  } else {
+    // For other HTTP requests
+    res.status(200).send("Bot is running!");
+  }
+}
+
 // Команда /start
 bot.start((ctx) => {
   const language = getLanguage(ctx.from.id);
@@ -68,9 +81,3 @@ bot.on("text", async (ctx) => {
     ctx.reply(LANGUAGES[language].error);
   }
 });
-
-// Запускаем бота
-bot.launch()
-  .catch(error => {
-    console.error("Error launching bot:", error);
-  });
