@@ -3,7 +3,6 @@ import yt_dlp
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
-from flask import Flask, request, jsonify
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG)
@@ -99,12 +98,7 @@ async def download_video(message: types.Message):
     else:
         await message.reply(LANGUAGES[language]["not_facebook"])
 
-# Создание веб-сервера для Vercel
-app = Flask(__name__)
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    if request.method == 'POST':
-        data = request.json
-        logger.debug(f"Received webhook data: {data}")
-        return jsonify({"status": "ok"}), 200
+# Запуск бота
+if __name__ == '__main__':
+    from aiogram import executor
+    executor.start_polling(dp, skip_updates=True)
