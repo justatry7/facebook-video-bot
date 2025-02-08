@@ -4,4 +4,6 @@ requests
 pytelegrambotapi
 flask
 aiohttp==3.8.1  # Или другую стабильную версию
+pip>=23.0
+
 
