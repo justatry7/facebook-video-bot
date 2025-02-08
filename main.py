@@ -12,9 +12,6 @@ logger = logging.getLogger()
 # Токен API (вставлен прямо в коде)
 API_TOKEN = "7798675393:AAEltxpXHGY6uJ920eyrp_CR4XrQ79W1odQ"
 
-# URL вебхука (вставлен прямо в коде)
-WEBHOOK_URL = "your_webhook_url_here"  # Здесь нужно указать свой URL
-
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
