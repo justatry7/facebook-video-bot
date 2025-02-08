@@ -1,10 +1,10 @@
 {
   "name": "facebook-video-bot",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "api/bot.js",  // Заменяем на api/bot.js
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node api/bot.js"  // Указываем правильный стартовый скрипт
   },
   "dependencies": {
     "telegraf": "^4.12.2",
