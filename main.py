@@ -3,7 +3,7 @@ import yt_dlp
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
-from flask import Flask
+from flask import Flask, request, jsonify
 from threading import Thread
 import time
 
@@ -98,31 +98,26 @@ async def download_video(message: types.Message):
     else:
         await message.reply(LANGUAGES[language]["not_facebook"])
 
-# Код для UptimeRobot
-app = Flask('')
+# Создание веб-сервера для Vercel
+app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "Bot is running!"
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    if request.method == 'POST':
+        data = request.json
+        # Здесь можно сделать дополнительные обработки данных
+        return jsonify({"status": "ok"}), 200
 
-def run():
-    print(f"\nServer running on port 8080")
-    app.run(host='0.0.0.0', port=8080, debug=False)
+def start_bot():
+    print("Bot is ready!")
+    executor.start_polling(dp, skip_updates=True)
 
-def keep_alive():
-    thread = Thread(target=run)
+# Этот блок запускается в Vercel
+def vercel_entry_point():
+    thread = Thread(target=start_bot)
     thread.start()
+    return "Bot is running!", 200
 
+# Экспортируем Flask приложение
 if __name__ == "__main__":
-    while True:
-        try:
-            print("\n=== Starting Bot ===")
-            print("1. Starting web server...")
-            keep_alive()
-            print("2. Starting Telegram bot...")
-            print("3. Bot is ready!")
-            executor.start_polling(dp, skip_updates=True)
-        except Exception as e:
-            print(f"\nERROR: {e}")
-            print("Restarting in 5 seconds...")
-            time.sleep(5)
+    vercel_entry_point()
