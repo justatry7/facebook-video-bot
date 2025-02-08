@@ -4,8 +4,6 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
 from flask import Flask, request, jsonify
-from threading import Thread
-import time
 
 # Получаем токен из переменных окружения
 API_TOKEN = os.getenv("API_TOKEN")
@@ -113,16 +111,5 @@ def webhook():
         # Здесь можно сделать дополнительные обработки данных
         return jsonify({"status": "ok"}), 200
 
-def start_bot():
-    print("Bot is ready!")
-    executor.start_polling(dp, skip_updates=True)
-
-# Этот блок запускается в Vercel
-def vercel_entry_point():
-    thread = Thread(target=start_bot)
-    thread.start()
-    return "Bot is running!", 200
-
-# Экспортируем Flask приложение
-if __name__ == "__main__":
-    vercel_entry_point()
+# Экспортируем Flask приложение (Vercel автоматически будет запускать Flask)
+app.run(debug=True, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
