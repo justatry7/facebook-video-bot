@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"net/http"
 	"github.com/joho/godotenv"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
 )
 
@@ -16,7 +15,7 @@ type FBResponse struct {
 	DownloadURL string `json:"download_url"`
 }
 
-func main() {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	// Загружаем переменные окружения из .env файла
 	err := godotenv.Load()
 	if err != nil {
@@ -36,13 +35,16 @@ func main() {
 	}
 	fmt.Printf("Authorized on account %s\n", bot.Self.UserName)
 
-	// Логика обработки сообщений
-	updates, err := bot.GetUpdatesChan(tgbotapi.NewUpdate(0))
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Обработка запроса
+	if r.Method == "POST" {
+		var update tgbotapi.Update
+		// Читаем тело запроса
+		err := json.NewDecoder(r.Body).Decode(&update)
+		if err != nil {
+			http.Error(w, "Failed to parse request", http.StatusBadRequest)
+			return
+		}
 
-	for update := range updates {
 		if update.Message != nil {
 			if update.Message.Text == "/start" {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Send me a Facebook video link, and I'll download it for you!")
@@ -56,7 +58,7 @@ func main() {
 				if err != nil {
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "An error occurred while downloading the video.")
 					bot.Send(msg)
-					continue
+					return
 				}
 
 				// Отправляем видео пользователю
@@ -68,6 +70,9 @@ func main() {
 			}
 		}
 	}
+
+	// Ответ на запрос
+	fmt.Fprintf(w, "Bot is running!")
 }
 
 // Проверка, является ли ссылка ссылкой на видео с Facebook
@@ -90,15 +95,9 @@ func getFacebookVideoDownloadURL(url string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	// Чтение ответа
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
 	// Декодируем JSON ответ
 	var response FBResponse
-	err = json.Unmarshal(body, &response)
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return "", err
 	}
