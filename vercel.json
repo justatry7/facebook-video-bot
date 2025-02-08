@@ -4,7 +4,8 @@
       "src": "main.go",
       "use": "@vercel/go",
       "config": {
-        "maxLambdaSize": "50mb"
+        "maxLambdaSize": "50mb",
+        "goVersion": "1.18"  // Убедись, что указан правильный goVersion, если это возможно
       }
     }
   ]
