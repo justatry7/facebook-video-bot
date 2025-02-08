@@ -1,12 +1,3 @@
-import subprocess
-import sys
-
-# Проверяем, установлен ли pytelegrambotapi
-try:
-    import telebot
-except ImportError:
-    # Если не установлен, устанавливаем через subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "pytelegrambotapi"])
 import os
 import yt_dlp
 from aiogram import Bot, Dispatcher, types
@@ -115,7 +106,6 @@ def home():
     return "Bot is running!"
 
 def run():
-    server_url = os.getenv('REPL_SLUG', '')
     print(f"\nServer running on port 8080")
     app.run(host='0.0.0.0', port=8080, debug=False)
 
