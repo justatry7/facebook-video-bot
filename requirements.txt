@@ -1,6 +1,6 @@
-aiohttp==3.8.1
-yt-dlp
-requests
 pytelegrambotapi
 flask
+aiohttp==3.8.1  # Или другую стабильную версию
 pip>=23.0
+python==3.9
+aiohttp==3.8.1 --find-links=https://www.lfd.uci.edu/~gohlke/pythonlibs/#aiohttp
