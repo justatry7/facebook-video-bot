@@ -1,46 +1,80 @@
 import { Telegraf } from "telegraf";
-import express from "express";
 import axios from "axios";
+import express from "express";
 import dotenv from "dotenv";
+import ytdl from "ytdl-core";
 
+// Загружаем переменные окружения
 dotenv.config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN); // Токен из переменных окружения
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Словарь с переводами
+const LANGUAGES = {
+  ru: {
+    start_message: "Привет! Отправь мне ссылку на видео из Facebook.",
+    downloading: "Загружаю видео, подождите...",
+    error: "Произошла ошибка при скачивании видео.",
+    not_facebook: "Это не ссылка на видео с Facebook!",
+    video_ready: "Вот ваше видео!",
+    language_changed: "Язык был изменен на русский.",
+  },
+  en: {
+    start_message: "Hi! Send me a link to a Facebook video.",
+    downloading: "Downloading video, please wait...",
+    error: "An error occurred while downloading the video.",
+    not_facebook: "This is not a Facebook video link!",
+    video_ready: "Here is your video!",
+    language_changed: "Language has been changed to English.",
+  },
+};
+
+const userLanguages = {};
+
+// Получаем язык пользователя (по умолчанию английский)
+function getLanguage(userId) {
+  return userLanguages[userId] || "en";
+}
+
 // Команда /start
 bot.start((ctx) => {
-  ctx.reply("Send me a Facebook video link, and I'll download it for you!");
+  const language = getLanguage(ctx.from.id);
+  ctx.reply(LANGUAGES[language].start_message);
 });
 
 // Обработчик текстовых сообщений (ожидаем ссылку)
 bot.on("text", async (ctx) => {
   const url = ctx.message.text;
-  
+  const language = getLanguage(ctx.from.id);
+
   if (!url.includes("facebook.com")) {
-    return ctx.reply("This is not a Facebook video link!");
+    return ctx.reply(LANGUAGES[language].not_facebook);
   }
 
-  ctx.reply("Downloading video, please wait...");
+  ctx.reply(LANGUAGES[language].downloading);
 
   try {
-    const response = await axios.get(`https://api.fdown.net/api/download?url=${encodeURIComponent(url)}`);
-    if (response.data && response.data.downloadUrl) {
-      ctx.replyWithVideo({ url: response.data.downloadUrl }, { caption: "Here is your video!" });
+    // Используем ytdl для получения информации о видео
+    const info = await ytdl.getInfo(url);
+    const videoUrl = info.formats.find(format => format.itag === 22); // Загружаем видео в хорошем качестве
+
+    if (videoUrl) {
+      ctx.replyWithVideo(videoUrl.url, { caption: LANGUAGES[language].video_ready });
     } else {
-      ctx.reply("Sorry, I couldn't download this video.");
+      ctx.reply(LANGUAGES[language].error);
     }
   } catch (error) {
-    ctx.reply("An error occurred while downloading the video.");
+    console.error(error);
+    ctx.reply(LANGUAGES[language].error);
   }
 });
 
 // Запускаем бота
 bot.launch();
 
-// Express для Vercel
+// Express сервер для Vercel
 app.get("/", (req, res) => {
   res.send("Bot is running!");
 });
