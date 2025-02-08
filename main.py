@@ -10,15 +10,11 @@ from flask import Flask, request, jsonify
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
-# Получаем токен из переменных окружения
-API_TOKEN = os.getenv("API_TOKEN")
-if not API_TOKEN:
-    raise ValueError("API_TOKEN is not set. Add it to the environment variables.")
+# Токен API (вставлен прямо в коде)
+API_TOKEN = "7798675393:AAEltxpXHGY6uJ920eyrp_CR4XrQ79W1odQ"
 
-# Получаем URL вебхука из переменных окружения
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-if not WEBHOOK_URL:
-    raise ValueError("WEBHOOK_URL is not set. Add it to the environment variables.")
+# URL вебхука (вставлен прямо в коде)
+WEBHOOK_URL = "your_webhook_url_here"  # Здесь нужно указать свой URL
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
