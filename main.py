@@ -3,6 +3,7 @@ import yt_dlp
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils import executor
+import aiofiles  # Для асинхронного открытия файлов
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG)
@@ -55,50 +56,4 @@ async def start_command(message: types.Message):
     language = get_language(message.from_user.id)
     await message.reply(LANGUAGES[language]["start_message"], reply_markup=language_keyboard())
 
-# Обработчик callback запросов для смены языка
-@dp.callback_query_handler(lambda c: c.data.startswith("set_language_"))
-async def set_language(callback_query: types.CallbackQuery):
-    language = callback_query.data.split('_')[-1]
-
-    if language in LANGUAGES:
-        user_languages[callback_query.from_user.id] = language  # Сохраняем язык для пользователя
-        await bot.answer_callback_query(callback_query.id, text=LANGUAGES[language]["language_changed"])
-
-        # Отправляем сообщение о смене языка
-        await bot.send_message(callback_query.from_user.id, LANGUAGES[language]["language_changed"])
-
-        # Запросить ссылку после смены языка
-        await bot.send_message(callback_query.from_user.id, LANGUAGES[language]["start_message"])
-
-# Обработчик для получения ссылки и скачивания видео
-@dp.message_handler()
-async def download_video(message: types.Message):
-    url = message.text
-    language = get_language(message.from_user.id)
-
-    if "facebook.com" in url:
-        await message.reply(LANGUAGES[language]["downloading"])
-
-        try:
-            ydl_opts = {
-                'quiet': True,
-                'format': 'best',
-                'outtmpl': '%(id)s.%(ext)s'
-            }
-
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                result = ydl.extract_info(url, download=True)
-
-                video_file = f"{result['id']}.mp4"
-                await message.reply_video(open(video_file, 'rb'), caption=LANGUAGES[language]["video_ready"])
-
-        except Exception as e:
-            logger.error(f"Error downloading video: {e}")
-            await message.reply(LANGUAGES[language]["error"])
-    else:
-        await message.reply(LANGUAGES[language]["not_facebook"])
-
-# Запуск бота
-if __name__ == '__main__':
-    from aiogram import executor
-    executor.start_polling(dp, skip_updates=True)
+# Обработчик callback
