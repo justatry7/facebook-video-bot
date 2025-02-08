@@ -1,6 +1,5 @@
 import { Telegraf } from "telegraf";
 import axios from "axios";
-import express from "express";
 import dotenv from "dotenv";
 import ytdl from "ytdl-core";
 
@@ -8,8 +7,6 @@ import ytdl from "ytdl-core";
 dotenv.config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN); // Токен из переменных окружения
-const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Словарь с переводами
 const LANGUAGES = {
@@ -74,12 +71,3 @@ bot.on("text", async (ctx) => {
 // Запускаем бота
 bot.launch();
 
-// Express сервер для Vercel
-app.get("/", (req, res) => {
-  res.send("Bot is running!");
-});
-
-// Запуск сервера
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
