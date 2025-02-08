@@ -3,10 +3,11 @@ import axios from "axios";
 import dotenv from "dotenv";
 import ytdl from "ytdl-core";
 
-// Загружаем переменные окружения
+// Загружаем переменные окружения из файла .env
 dotenv.config();
 
-const bot = new Telegraf(process.env.BOT_TOKEN); // Токен из переменных окружения
+// Создаем бота с токеном из переменных окружения
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // Словарь с переводами
 const LANGUAGES = {
@@ -63,11 +64,13 @@ bot.on("text", async (ctx) => {
       ctx.reply(LANGUAGES[language].error);
     }
   } catch (error) {
-    console.error(error);
+    console.error("Error occurred during video download:", error);
     ctx.reply(LANGUAGES[language].error);
   }
 });
 
 // Запускаем бота
-bot.launch();
-
+bot.launch()
+  .catch(error => {
+    console.error("Error launching bot:", error);
+  });
