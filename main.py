@@ -1,0 +1,138 @@
+import subprocess
+import sys
+
+# Проверяем, установлен ли pytelegrambotapi
+try:
+    import telebot
+except ImportError:
+    # Если не установлен, устанавливаем через subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "pytelegrambotapi"])
+import os
+import yt_dlp
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils import executor
+from flask import Flask
+from threading import Thread
+import time
+
+# Получаем токен из переменных окружения
+API_TOKEN = os.getenv("API_TOKEN")
+if not API_TOKEN:
+    raise ValueError("API_TOKEN is not set. Add it to the environment variables.")
+
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+
+# Словарь с переводами
+LANGUAGES = {
+    "ru": {
+        "start_message": "Привет! Отправь мне ссылку на видео из Facebook.",
+        "downloading": "Загружаю видео, подождите...",
+        "error": "Произошла ошибка при скачивании видео.",
+        "not_facebook": "Это не ссылка на видео с Facebook!",
+        "video_ready": "Вот ваше видео!",
+        "language_changed": "Язык был изменен на русский.",
+    },
+    "en": {
+        "start_message": "Hi! Send me a link to a Facebook video.",
+        "downloading": "Downloading video, please wait...",
+        "error": "An error occurred while downloading the video.",
+        "not_facebook": "This is not a Facebook video link!",
+        "video_ready": "Here is your video!",
+        "language_changed": "Language has been changed to English.",
+    },
+}
+
+# Словарь для хранения языка пользователя
+user_languages = {}
+
+# Функция для получения языка пользователя (по умолчанию английский)
+def get_language(user_id):
+    return user_languages.get(user_id, "en")
+
+# Функция для создания кнопки выбора языка
+def language_keyboard():
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    btn_en = InlineKeyboardButton("English", callback_data="set_language_en")
+    btn_ru = InlineKeyboardButton("Русский", callback_data="set_language_ru")
+    keyboard.add(btn_en, btn_ru)
+    return keyboard
+
+# Обработчик команды /start
+@dp.message_handler(commands=["start"])
+async def start_command(message: types.Message):
+    language = get_language(message.from_user.id)
+    await message.reply(LANGUAGES[language]["start_message"], reply_markup=language_keyboard())
+
+# Обработчик callback запросов для смены языка
+@dp.callback_query_handler(lambda c: c.data.startswith("set_language_"))
+async def set_language(callback_query: types.CallbackQuery):
+    language = callback_query.data.split('_')[-1]
+
+    if language in LANGUAGES:
+        user_languages[callback_query.from_user.id] = language  # Сохраняем язык для пользователя
+        await bot.answer_callback_query(callback_query.id, text=LANGUAGES[language]["language_changed"])
+
+        # Отправляем сообщение о смене языка
+        await bot.send_message(callback_query.from_user.id, LANGUAGES[language]["language_changed"])
+
+        # Запросить ссылку после смены языка
+        await bot.send_message(callback_query.from_user.id, LANGUAGES[language]["start_message"])
+
+# Обработчик для получения ссылки и скачивания видео
+@dp.message_handler()
+async def download_video(message: types.Message):
+    url = message.text
+    language = get_language(message.from_user.id)
+
+    if "facebook.com" in url:
+        await message.reply(LANGUAGES[language]["downloading"])
+
+        try:
+            ydl_opts = {
+                'quiet': True,
+                'format': 'best',
+                'outtmpl': '%(id)s.%(ext)s'
+            }
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                result = ydl.extract_info(url, download=True)
+
+                video_file = f"{result['id']}.mp4"
+                await message.reply_video(open(video_file, 'rb'), caption=LANGUAGES[language]["video_ready"])
+
+        except Exception as e:
+            await message.reply(LANGUAGES[language]["error"])
+    else:
+        await message.reply(LANGUAGES[language]["not_facebook"])
+
+# Код для UptimeRobot
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+def run():
+    server_url = os.getenv('REPL_SLUG', '')
+    print(f"\nServer running on port 8080")
+    app.run(host='0.0.0.0', port=8080, debug=False)
+
+def keep_alive():
+    thread = Thread(target=run)
+    thread.start()
+
+if __name__ == "__main__":
+    while True:
+        try:
+            print("\n=== Starting Bot ===")
+            print("1. Starting web server...")
+            keep_alive()
+            print("2. Starting Telegram bot...")
+            print("3. Bot is ready!")
+            executor.start_polling(dp, skip_updates=True)
+        except Exception as e:
+            print(f"\nERROR: {e}")
+            print("Restarting in 5 seconds...")
+            time.sleep(5)
